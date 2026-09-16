@@ -6,6 +6,17 @@ let timerInterval;
 const startButton = document.querySelectorAll(".start-btn");
 const chime = new Audio('chime.mp3');
 
+let wakeLock = null;
+
+async function requestWakeLock() {
+    try {
+        wakeLock = await navigator.wakeLock.request('screen');
+        console.log('Screen Wake Lock is active!');
+    } catch (err) {
+        console.error('Wake Lock error: ${err.name, ${err.message}')
+    }
+}
+
 nextButton.forEach((button) => {
     button.addEventListener("click", () => {
     if (currentStretchIndex < stretches.length - 1) {
@@ -18,6 +29,15 @@ nextButton.forEach((button) => {
 
 startButton.forEach((button) => {
     button.addEventListener("click", () => {
+    requestWakeLock();
+
+    chime.play().then(() => {
+        chime.pause();
+        chime.currentTime = 0;
+    }).catch((error) => {
+        console.log("Audio unlock failed:", error);
+    });
+    
     startTimer();
     });
 });
@@ -39,9 +59,6 @@ function startTimer() {
         timeLeft --;
         displayTime();
         
-        timer.forEach((time) => {
-            time.textContent = `${minutes}:${String(seconds).padStart(2,'0')}`;
-        })
         if (timeLeft === 0) {
             clearInterval(timerInterval);
         }
